@@ -237,6 +237,96 @@ app.get("/todos", async (req: Request, res: Response) => {
   }
 });
 
+//? get single todo
+app.get("/todos/:id", async (req: Request, res: Response) => {
+  const id = req.params.id;
+  try {
+    const result = await pool.query(`SELECT * FROM todos WHERE id=$1`, [id]);
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "Todo not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Todo retrieved",
+        data: result.rows[0],
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      details: err,
+    });
+  }
+});
+
+//? update todo
+
+app.put("/todos/:id", async (req: Request, res: Response) => {
+  const { title, completed } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE todos SET title=$1, completed=$2 WHERE id=$3 RETURNING *`,
+      [title, completed, req.params.id],
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "Todo not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Todo retrieved successfully",
+        data: result.rows[0],
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      details: err,
+    });
+  }
+});
+
+//? delete todo
+app.delete("/todos/:id", async (req: Request, res: Response) => {
+  //   console.log(req.params.id);
+
+  try {
+    const result = await pool.query(`DELETE FROM todos WHERE id=$1`, [
+      req.params.id,
+    ]);
+
+    if (result.rowCount === 0) {
+      res.status(500).json({
+        success: false,
+        message: "Todo not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Todo deleted successfully",
+        data: result.rows,
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      details: err,
+    });
+  }
+});
+
+//? not found route
 app.use((req, res) => {
   res.status(404).json({
     success: false,
